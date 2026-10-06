@@ -1,0 +1,37 @@
+[project]
+name = "barber-saas-worker"
+version = "0.1.0"
+description = "The BarberSaaS worker: outbox relay and daily jobs (ADR-016, norm 5.7)"
+requires-python = ">=3.12"
+# Standard library only at runtime (ADR-012): urllib, http.server, threading.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.3", "import-linter==2.1"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+
+# What replaces the compiler (hexagonal-architecture.md, "Python services"): the domain imports nothing
+# from the project, the application imports only the domain, and neither imports an adapter.
+[tool.importlinter]
+root_package = "worker"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Hexagonal layers"
+type = "layers"
+layers = ["worker.adapter", "worker.application", "worker.domain"]
+
+[[tool.importlinter.contracts]]
+name = "The domain stands alone"
+type = "forbidden"
+source_modules = ["worker.domain"]
+forbidden_modules = ["worker.application", "worker.adapter", "urllib", "http", "socket"]
+
+[[tool.importlinter.contracts]]
+name = "The application uses ports, not the network"
+type = "forbidden"
+source_modules = ["worker.application"]
+forbidden_modules = ["worker.adapter", "urllib", "http", "socket"]
