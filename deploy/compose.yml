@@ -1,0 +1,40 @@
+# This service only. barber-saas-infra-postgres includes this file to compose the platform.
+services:
+  worker:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    environment:
+      HEALTH_PORT: "8080"
+      # The worker's own token (sub: barber-saas-worker), never a user's (ADR-016).
+      SERVICE_TOKEN: ${WORKER_SERVICE_TOKEN:?run barber-saas-infra-postgres/scripts/dev-keys.sh}
+      # Producers whose outbox it relays; add loyalty and identity-auth once they publish (DEC-LOY-04, DEC-AUTH-08).
+      PRODUCERS: ${WORKER_PRODUCERS:-appointment}
+      APPOINTMENT_API_URL: http://appointment-api:8080
+      PLATFORM_ADMIN_API_URL: http://platform-admin-api:8080
+      # Consumers: empty until the service is deployed; their events wait in the outbox meanwhile.
+      LOYALTY_API_URL: ${WORKER_LOYALTY_API_URL:-}
+      NOTIFICATIONS_API_URL: ${WORKER_NOTIFICATIONS_API_URL:-}
+      IDENTITY_AUTH_API_URL: http://identity-auth-api:8080
+      # Daily jobs, Colombia time (UTC-5, no daylight saving).
+      UTC_OFFSET_HOURS: "-5"
+      REMINDERS_AT: "18:00"
+      NO_SHOWS_AT: "01:00"
+      TRIALS_AT: "02:00"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+    # expose, not ports: nothing outside the network calls the worker (norm 5.7.1).
+    expose: ["8080"]
+    networks: [platform]
+
+networks:
+  platform:
+    name: platform
+    external: true
