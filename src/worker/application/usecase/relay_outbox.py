@@ -13,6 +13,7 @@ from worker.domain.model.retry import MAX_ATTEMPTS, Backoff, is_retryable
 from worker.domain.model.routing import consumers_of
 
 BATCH_LIMIT = 50
+PRODUCER_RETRY_SECONDS = 60.0
 
 
 @dataclass
@@ -60,13 +61,17 @@ class RelayOutbox:
         self._rand = rand
         self._attempts: dict[str, _Attempts] = {}
         self._handlers: dict[str, DeliverEvent] = {}
+        self._producer_retry_at = 0.0
 
     def run(self, deadline: float) -> JobReport:
         report = JobReport(self.name)
+        if self._clock.now() < self._producer_retry_at:
+            return report                           # the producer did not answer a moment ago
         try:
             events = self._producer.pending(BATCH_LIMIT)
         except CallFailed as failure:
             report.notes.append(f"{self._producer.name} pending: {failure.status} {failure.reason}")
+            self._producer_retry_at = self._clock.now() + PRODUCER_RETRY_SECONDS
             return report
         for event in events:
             if self._clock.now() >= deadline:

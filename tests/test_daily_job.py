@@ -7,8 +7,10 @@ from worker.application.usecase.daily_job import DailyJob
 
 
 class FakeClock:
+    t = 0.0
+
     def now(self) -> float:
-        return 0.0
+        return self.t
 
 
 class FakeCall:
@@ -26,8 +28,8 @@ class FakeCall:
         return answer
 
 
-def job(call: FakeCall, now: list[datetime]) -> DailyJob:
-    return DailyJob(call, time(18, 0), FakeClock(), lambda: now[0])
+def job(call: FakeCall, now: list[datetime], clock: FakeClock | None = None) -> DailyJob:
+    return DailyJob(call, time(18, 0), clock or FakeClock(), lambda: now[0])
 
 
 def test_it_runs_after_its_time_once_a_day_while_there_is_more():
@@ -42,13 +44,15 @@ def test_it_runs_after_its_time_once_a_day_while_there_is_more():
     assert daily.run(10.0).done == 1
 
 
-def test_a_failed_call_is_tried_again_in_the_next_run_of_the_day():
-    now = [datetime(2026, 10, 6, 18, 5)]
+def test_a_failed_call_is_tried_again_five_minutes_later_the_same_day():
+    now, clock = [datetime(2026, 10, 6, 18, 5)], FakeClock()
     call = FakeCall(503, (2, False))
-    daily = job(call, now)
+    daily = job(call, now, clock)
     assert daily.run(10.0).failed == 1
+    assert not daily.due()                         # not on every tick of the scheduler
+    clock.t = 301.0
     assert daily.due()
-    assert daily.run(10.0).done == 2 and not daily.due()
+    assert daily.run(400.0).done == 2 and not daily.due()
 
 
 def test_the_deadline_stops_it():
