@@ -9,6 +9,7 @@ from worker.application.port.inbound.job import JobReport
 from worker.application.port.outbound.services import CallFailed, Clock, DailyCall
 
 CALL_LIMIT = 50
+RETRY_AFTER_SECONDS = 300.0
 
 
 class DailyJob:
@@ -25,10 +26,11 @@ class DailyJob:
         self._clock = clock
         self._local_now = local_now
         self._done_on: date | None = None
+        self._retry_at = 0.0
 
     def due(self) -> bool:
         now = self._local_now()
-        return now.time() >= self._at and self._done_on != now.date()
+        return now.time() >= self._at and self._done_on != now.date() and self._clock.now() >= self._retry_at
 
     def run(self, deadline: float) -> JobReport:
         report = JobReport(self.name)
@@ -40,7 +42,9 @@ class DailyJob:
             except CallFailed as failure:
                 report.failed += 1
                 report.notes.append(f"{self._call.name}: {failure.status} {failure.reason}")
-                return report                       # not done: the next run of the day tries again
+                # Not done: tried again after RETRY_AFTER_SECONDS, not on every tick of the scheduler.
+                self._retry_at = self._clock.now() + RETRY_AFTER_SECONDS
+                return report
             report.done += processed
             if not remaining:
                 self._done_on = self._local_now().date()
