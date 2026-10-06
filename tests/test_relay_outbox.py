@@ -123,11 +123,16 @@ def test_a_run_is_bounded_by_the_batch_and_the_deadline():
     assert late.published_ids == [] and "deadline" in report.notes[0]
 
 
-def test_a_producer_that_does_not_answer_is_skipped_for_this_run():
-    clock, producer = FakeClock(), FakeProducer(event(1))
+def test_a_producer_that_does_not_answer_is_asked_again_a_minute_later():
+    clock, producer = FakeClock(), FakeProducer(event(1, "AppointmentCreated"))
     producer.down = True
-    report = relay(producer, clock).run(clock.t + 30)
-    assert "pending: 0" in report.notes[0]
+    job = relay(producer, clock)
+    assert "pending: 0" in job.run(clock.t + 30).notes[0]
+    producer.down = False
+    assert job.run(clock.t + 30).notes == [] and producer.published_ids == []
+    clock.t += 61
+    job.run(clock.t + 30)
+    assert producer.published_ids == ["e1"]
 
 
 def test_retry_policy_of_the_norm():
