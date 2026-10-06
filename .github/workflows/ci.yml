@@ -1,0 +1,30 @@
+name: CI
+
+# Every Pull Request runs the tests and the import-linter contracts on a clean machine, with the
+# Python of the image, and builds the image.
+
+on:
+  pull_request:
+    branches: [develop, qa, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e ".[dev]"
+      - run: pytest -q
+      - run: lint-imports
+      - run: docker build -f deploy/Dockerfile -t worker .
