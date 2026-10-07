@@ -33,6 +33,11 @@ def _at(value: str) -> clock_time:
     return clock_time(int(hours), int(minutes))
 
 
+def _names(value: str) -> list[str]:
+    """A comma-separated list of service names, blanks ignored."""
+    return [n.strip() for n in value.split(",") if n.strip()]
+
+
 def build_jobs(env: dict[str, str]) -> list[Job]:
     """Every job the environment enables. A service without a URL is simply not called."""
     token = env.get("SERVICE_TOKEN", "")
@@ -49,16 +54,19 @@ def build_jobs(env: dict[str, str]) -> list[Job]:
     def local_now() -> datetime:
         return datetime.now(offset)
 
+    # A service can produce before it consumes (loyalty publishes stickers before it receives
+    # AppointmentCompleted): CONSUMERS names the ones that already take POST /internal/v1/events.
+    consumer_urls = {LOYALTY: "LOYALTY_API_URL", NOTIFICATIONS: "NOTIFICATIONS_API_URL"}
     consumers = {}
-    for name, var in ((LOYALTY, "LOYALTY_API_URL"), (NOTIFICATIONS, "NOTIFICATIONS_API_URL")):
-        c = client(var)
+    for name in _names(env.get("CONSUMERS", f"{LOYALTY},{NOTIFICATIONS}")):
+        c = client(consumer_urls[name])
         if c:
             consumers[name] = HttpConsumer(name, c)
 
     jobs: list[Job] = []
     producer_urls = {"appointment": "APPOINTMENT_API_URL", "loyalty": "LOYALTY_API_URL",
                      "identity-auth": "IDENTITY_AUTH_API_URL"}
-    for name in [p.strip() for p in env.get("PRODUCERS", "appointment").split(",") if p.strip()]:
+    for name in _names(env.get("PRODUCERS", "appointment")):
         c = client(producer_urls[name])
         if c:
             jobs.append(RelayOutbox(HttpProducer(name, c), consumers, clock))
