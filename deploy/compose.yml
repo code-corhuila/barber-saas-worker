@@ -8,8 +8,8 @@ services:
       HEALTH_PORT: "8080"
       # The worker's own token (sub: barber-saas-worker), never a user's (ADR-016).
       SERVICE_TOKEN: ${WORKER_SERVICE_TOKEN:?run barber-saas-infra-postgres/scripts/dev-keys.sh}
-      # Producers whose outbox it relays; add loyalty and identity-auth once they publish (DEC-LOY-04, DEC-AUTH-08).
-      PRODUCERS: ${WORKER_PRODUCERS:-appointment}
+      # Producers whose outbox it relays; add loyalty once it publishes (DEC-LOY-04).
+      PRODUCERS: ${WORKER_PRODUCERS:-appointment,identity-auth}
       APPOINTMENT_API_URL: http://appointment-api:8080
       PLATFORM_ADMIN_API_URL: http://platform-admin-api:8080
       # Consumers: empty until the service is deployed (loyalty), so their events wait in the outbox.
