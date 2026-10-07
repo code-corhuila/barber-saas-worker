@@ -35,7 +35,9 @@ work. It exposes no business HTTP interface: only `GET /health` (norm 5.7.1).
   events (`GET /internal/v1/outbox-events`), delivers each to the consumers of its type
   (`POST /internal/v1/events` of loyalty-api and notifications-api; routing in
   `domain/model/routing.py`, the table of `02-domain/domain-events.md`) and confirms it
-  (`.../published`, or `.../failed` with the reason).
+  (`.../published`, or `.../failed` with the reason). `CONSUMERS` lists the consumers already able
+  to receive: an event whose consumer is left out waits in its outbox, so a service can publish
+  (loyalty's stickers) before it consumes (`AppointmentCompleted`).
 - **Daily jobs:** `reminders-due` (18:00), `no-shows` (01:00) on appointment-api and `trials/expire`
   (02:00, FR-026) on platform-admin-api, Colombia time. The rules live in those services.
 
