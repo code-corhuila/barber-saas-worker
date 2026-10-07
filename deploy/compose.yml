@@ -8,12 +8,14 @@ services:
       HEALTH_PORT: "8080"
       # The worker's own token (sub: barber-saas-worker), never a user's (ADR-016).
       SERVICE_TOKEN: ${WORKER_SERVICE_TOKEN:?run barber-saas-infra-postgres/scripts/dev-keys.sh}
-      # Producers whose outbox it relays; add loyalty once it publishes (DEC-LOY-04).
-      PRODUCERS: ${WORKER_PRODUCERS:-appointment,identity-auth}
+      # Producers whose outbox it relays (DEC-APPT-07, DEC-AUTH-08, DEC-LOY-04).
+      PRODUCERS: ${WORKER_PRODUCERS:-appointment,identity-auth,loyalty}
+      # Consumers that already take POST /internal/v1/events; add loyalty once it does (L-3), and
+      # meanwhile AppointmentCompleted waits in appointment's outbox instead of failing.
+      CONSUMERS: ${WORKER_CONSUMERS:-notifications}
       APPOINTMENT_API_URL: http://appointment-api:8080
       PLATFORM_ADMIN_API_URL: http://platform-admin-api:8080
-      # Consumers: empty until the service is deployed (loyalty), so their events wait in the outbox.
-      LOYALTY_API_URL: ${WORKER_LOYALTY_API_URL:-}
+      LOYALTY_API_URL: ${WORKER_LOYALTY_API_URL:-http://loyalty-api:8080}
       NOTIFICATIONS_API_URL: ${WORKER_NOTIFICATIONS_API_URL:-http://notifications-api:8080}
       IDENTITY_AUTH_API_URL: http://identity-auth-api:8080
       # Daily jobs, Colombia time (UTC-5, no daylight saving).
