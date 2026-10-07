@@ -112,3 +112,13 @@ def test_the_environment_enables_only_configured_services():
     assert [j.name for j in jobs] == ["relay-appointment", "daily-reminders-due", "daily-no-shows"]
     with pytest.raises(SystemExit):
         build_jobs({})
+
+
+def test_a_service_can_produce_before_it_consumes():
+    env = {"SERVICE_TOKEN": "t", "PRODUCERS": "loyalty", "CONSUMERS": "notifications",
+           "LOYALTY_API_URL": "http://loyalty-api:8080", "NOTIFICATIONS_API_URL": "http://notifications-api:8080"}
+    relay = build_jobs(env)[0]
+    assert relay.name == "relay-loyalty"
+    assert sorted(relay._consumers) == ["notifications"]
+    env["CONSUMERS"] = "loyalty,notifications"
+    assert sorted(build_jobs(env)[0]._consumers) == ["loyalty", "notifications"]
