@@ -12,9 +12,9 @@ services:
       PRODUCERS: ${WORKER_PRODUCERS:-appointment}
       APPOINTMENT_API_URL: http://appointment-api:8080
       PLATFORM_ADMIN_API_URL: http://platform-admin-api:8080
-      # Consumers: empty until the service is deployed; their events wait in the outbox meanwhile.
+      # Consumers: empty until the service is deployed (loyalty), so their events wait in the outbox.
       LOYALTY_API_URL: ${WORKER_LOYALTY_API_URL:-}
-      NOTIFICATIONS_API_URL: ${WORKER_NOTIFICATIONS_API_URL:-}
+      NOTIFICATIONS_API_URL: ${WORKER_NOTIFICATIONS_API_URL:-http://notifications-api:8080}
       IDENTITY_AUTH_API_URL: http://identity-auth-api:8080
       # Daily jobs, Colombia time (UTC-5, no daylight saving).
       UTC_OFFSET_HOURS: "-5"
