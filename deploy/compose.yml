@@ -10,9 +10,9 @@ services:
       SERVICE_TOKEN: ${WORKER_SERVICE_TOKEN:?run barber-saas-infra-postgres/scripts/dev-keys.sh}
       # Producers whose outbox it relays (DEC-APPT-07, DEC-AUTH-08, DEC-LOY-04).
       PRODUCERS: ${WORKER_PRODUCERS:-appointment,identity-auth,loyalty}
-      # Consumers that already take POST /internal/v1/events; add loyalty once it does (L-3), and
-      # meanwhile AppointmentCompleted waits in appointment's outbox instead of failing.
-      CONSUMERS: ${WORKER_CONSUMERS:-notifications}
+      # Consumers that take POST /internal/v1/events (loyalty since L-3, DEC-LOY-05). One left out
+      # keeps its events waiting in the producer's outbox instead of failing them.
+      CONSUMERS: ${WORKER_CONSUMERS:-loyalty,notifications}
       APPOINTMENT_API_URL: http://appointment-api:8080
       PLATFORM_ADMIN_API_URL: http://platform-admin-api:8080
       LOYALTY_API_URL: ${WORKER_LOYALTY_API_URL:-http://loyalty-api:8080}
