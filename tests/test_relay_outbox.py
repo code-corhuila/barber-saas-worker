@@ -66,7 +66,7 @@ def test_an_event_goes_to_every_consumer_and_is_confirmed_once():
 
 
 def test_an_event_nobody_consumes_is_confirmed_without_delivery():
-    clock, producer = FakeClock(), FakeProducer(event(1, "AppointmentCreated"))
+    clock, producer = FakeClock(), FakeProducer(event(1, "AppointmentMarkedNoShow"))
     relay(producer, clock).run(clock.t + 30)
     assert producer.published_ids == ["e1"]
 
@@ -115,16 +115,16 @@ def test_a_type_without_a_route_fails():
 
 def test_a_run_is_bounded_by_the_batch_and_the_deadline():
     clock = FakeClock()
-    producer = FakeProducer(*[event(n, "AppointmentCreated") for n in range(BATCH_LIMIT + 10)])
+    producer = FakeProducer(*[event(n, "AppointmentMarkedNoShow") for n in range(BATCH_LIMIT + 10)])
     relay(producer, clock).run(clock.t + 30)
     assert len(producer.published_ids) == BATCH_LIMIT
-    late = FakeProducer(event(1, "AppointmentCreated"))
+    late = FakeProducer(event(1, "AppointmentMarkedNoShow"))
     report = relay(late, clock).run(clock.t)       # deadline already reached
     assert late.published_ids == [] and "deadline" in report.notes[0]
 
 
 def test_a_producer_that_does_not_answer_is_asked_again_a_minute_later():
-    clock, producer = FakeClock(), FakeProducer(event(1, "AppointmentCreated"))
+    clock, producer = FakeClock(), FakeProducer(event(1, "AppointmentMarkedNoShow"))
     producer.down = True
     job = relay(producer, clock)
     assert "pending: 0" in job.run(clock.t + 30).notes[0]
@@ -141,3 +141,11 @@ def test_retry_policy_of_the_norm():
     backoff = Backoff(base_seconds=5, cap_seconds=300)
     assert backoff.delay(1, 0.0) == 5 and backoff.delay(3, 0.0) == 20
     assert backoff.delay(20, 0.0) == 300 and backoff.delay(1, 1.0) == 7.5
+
+
+def test_appointment_created_goes_to_loyalty_for_the_coupon_applied_at_booking():
+    clock, producer = FakeClock(), FakeProducer(event(1, "AppointmentCreated"))
+    loyalty, notifications = FakeConsumer("loyalty"), FakeConsumer("notifications")
+    relay(producer, clock, loyalty=loyalty, notifications=notifications).run(clock.t + 30)
+    assert loyalty.received == ["e1"] and notifications.received == []
+    assert producer.published_ids == ["e1"]
