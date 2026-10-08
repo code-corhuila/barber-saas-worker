@@ -8,7 +8,8 @@ NOTIFICATIONS = "notifications"
 # One entry per event type the producers write (ADR-016). An empty tuple means nobody consumes it
 # yet: the worker confirms it as published without delivering it.
 ROUTES: dict[str, tuple[str, ...]] = {
-    "AppointmentCreated": (LOYALTY,),           # the coupon applied at booking (DEC-LOY-06)
+    # The coupon applied at booking (DEC-LOY-06, barber-saas-docs 07-api/contracts/openapi/loyalty-service.yaml).
+    "AppointmentCreated": (LOYALTY,),
     "AppointmentConfirmed": (NOTIFICATIONS,),
     "AppointmentCancelled": (NOTIFICATIONS,),
     "AppointmentReminderDue": (NOTIFICATIONS,),
