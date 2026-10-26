@@ -89,6 +89,11 @@ def build_jobs(env: dict[str, str]) -> list[Job]:
     if platform:
         jobs.append(DailyJob(HttpDailyCall("trials-expire", platform, "/internal/v1/trials/expire"),
                              _at(env.get("TRIALS_AT", "02:00")), clock, local_now))
+        # DEC-PLAT-07: the paid month that ended, then the 7-day and 1-day notices.
+        jobs.append(DailyJob(HttpDailyCall("subscriptions-expire", platform, "/internal/v1/subscriptions/expire"),
+                             _at(env.get("SUBSCRIPTIONS_AT", "02:05")), clock, local_now))
+        jobs.append(DailyJob(HttpDailyCall("subscription-notices", platform, "/internal/v1/subscriptions/notices"),
+                             _at(env.get("NOTICES_AT", "09:00")), clock, local_now))
     return jobs
 
 
