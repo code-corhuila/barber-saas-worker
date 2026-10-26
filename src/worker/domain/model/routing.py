@@ -18,6 +18,10 @@ ROUTES: dict[str, tuple[str, ...]] = {
     "StickerGranted": (NOTIFICATIONS,),
     "RewardRedeemed": (NOTIFICATIONS,),
     "PasswordResetRequested": (NOTIFICATIONS,),
+    # MVP 3 (DEC-AUTH-09, DEC-PLAT-07, DEC-NOTIF-02).
+    "EmailVerificationRequested": (NOTIFICATIONS,),
+    "PlanExpiringSoon": (NOTIFICATIONS,),
+    "BarbershopSuspended": (NOTIFICATIONS,),
 }
 
 
