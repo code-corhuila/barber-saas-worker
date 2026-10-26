@@ -19,6 +19,7 @@ from worker.adapter.outbound.http.client import HttpClient
 from worker.adapter.outbound.http.services import HttpConsumer, HttpDailyCall, HttpProducer
 from worker.application.port.inbound.job import Job
 from worker.application.usecase.daily_job import DailyJob
+from worker.application.usecase.interval_job import IntervalJob
 from worker.application.usecase.relay_outbox import RelayOutbox
 from worker.domain.model.routing import LOYALTY, NOTIFICATIONS
 
@@ -65,7 +66,7 @@ def build_jobs(env: dict[str, str]) -> list[Job]:
 
     jobs: list[Job] = []
     producer_urls = {"appointment": "APPOINTMENT_API_URL", "loyalty": "LOYALTY_API_URL",
-                     "identity-auth": "IDENTITY_AUTH_API_URL"}
+                     "identity-auth": "IDENTITY_AUTH_API_URL", "platform-admin": "PLATFORM_ADMIN_API_URL"}
     for name in _names(env.get("PRODUCERS", "appointment")):
         c = client(producer_urls[name])
         if c:
@@ -73,8 +74,16 @@ def build_jobs(env: dict[str, str]) -> list[Job]:
 
     appointment, platform = client("APPOINTMENT_API_URL"), client("PLATFORM_ADMIN_API_URL")
     if appointment:
-        jobs.append(DailyJob(HttpDailyCall("reminders-due", appointment, "/internal/v1/appointments/reminders-due"),
+        jobs.append(DailyJob(HttpDailyCall("reminders-due", appointment,
+                                           "/internal/v1/appointments/reminders-due?window=DAY_BEFORE"),
                              _at(env.get("REMINDERS_AT", "18:00")), clock, local_now))
+        # The one-hour reminder (DEC-APPT-12). Off until appointment-api takes `window`: an older
+        # appointment-api would treat every call as the day-before reminder.
+        every = env.get("HOUR_REMINDERS_EVERY_SECONDS", "").strip()
+        if every:
+            jobs.append(IntervalJob(HttpDailyCall("hour-reminders-due", appointment,
+                                                  "/internal/v1/appointments/reminders-due?window=HOUR_BEFORE"),
+                                    float(every), clock))
         jobs.append(DailyJob(HttpDailyCall("no-shows", appointment, "/internal/v1/appointments/no-shows"),
                              _at(env.get("NO_SHOWS_AT", "01:00")), clock, local_now))
     if platform:
