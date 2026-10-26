@@ -149,3 +149,8 @@ def test_appointment_created_goes_to_loyalty_for_the_coupon_applied_at_booking()
     relay(producer, clock, loyalty=loyalty, notifications=notifications).run(clock.t + 30)
     assert loyalty.received == ["e1"] and notifications.received == []
     assert producer.published_ids == ["e1"]
+
+def test_the_mvp3_events_go_to_notifications():
+    from worker.domain.model.routing import NOTIFICATIONS, consumers_of
+    for event_type in ("EmailVerificationRequested", "PlanExpiringSoon", "BarbershopSuspended"):
+        assert consumers_of(event_type) == (NOTIFICATIONS,)
