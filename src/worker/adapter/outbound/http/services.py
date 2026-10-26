@@ -38,14 +38,20 @@ class HttpProducer:
 
 
 class HttpConsumer:
-    """POST /internal/v1/events: 200 (PROCESSED, DUPLICATE or IGNORED) is a delivery."""
+    """POST /internal/v1/events: 200 (PROCESSED, DUPLICATE or IGNORED) is a delivery.
+
+    The call carries the envelope's ``correlationId``, the X-Correlation-Id of the request that caused
+    the event, so the consumer's log shares the id of that request instead of the worker's run.
+    """
 
     def __init__(self, name: str, client: HttpClient) -> None:
         self.name = name
         self._client = client
 
     def deliver(self, event: Event) -> None:
-        status, body = self._client.request("POST", "/internal/v1/events", event.envelope)
+        correlation_id = event.envelope.get("correlationId")
+        status, body = self._client.request("POST", "/internal/v1/events", event.envelope,
+                                            correlation_id if isinstance(correlation_id, str) else None)
         expect(status, body, 200)
 
 

@@ -80,6 +80,28 @@ def test_the_consumer_sends_the_envelope_as_it_is_and_reports_the_status(server)
     assert failure.value.status == 422 and failure.value.reason == "BUSINESS_RULE_VIOLATION"
 
 
+def test_the_consumer_gets_the_correlation_id_of_the_request_that_caused_the_event(server):
+    envelope = {"id": "e3", "type": "AppointmentCreated", "version": 1, "correlationId": "corr-test", "payload": {}}
+    ANSWERS[("POST", "/internal/v1/events")] = (200, {"eventId": "e3", "outcome": "PROCESSED"})
+    token = CORRELATION_ID.set("run-123")
+    try:
+        HttpConsumer("loyalty", server).deliver(Event.from_envelope(envelope))
+    finally:
+        CORRELATION_ID.reset(token)
+    assert SEEN[0][3]["X-Correlation-Id"] == "corr-test"
+
+
+def test_an_envelope_without_correlation_id_falls_back_to_the_run(server):
+    envelope = {"id": "e4", "type": "AppointmentCreated", "version": 1, "payload": {}}
+    ANSWERS[("POST", "/internal/v1/events")] = (200, {"eventId": "e4", "outcome": "PROCESSED"})
+    token = CORRELATION_ID.set("run-123")
+    try:
+        HttpConsumer("loyalty", server).deliver(Event.from_envelope(envelope))
+    finally:
+        CORRELATION_ID.reset(token)
+    assert SEEN[0][3]["X-Correlation-Id"] == "run-123"
+
+
 def test_a_failure_is_reported_with_its_reason(server):
     ANSWERS[("POST", "/internal/v1/outbox-events/e3/failed")] = (204, None)
     HttpProducer("appointment", server).failed("e3", "notifications 422 BUSINESS_RULE_VIOLATION")
