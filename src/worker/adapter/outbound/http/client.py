@@ -24,15 +24,19 @@ class HttpClient:
         self._token = service_token
         self._timeout = timeout
 
-    def request(self, method: str, path: str, body: dict[str, Any] | None = None) -> tuple[int, Any]:
-        """(status, parsed JSON or None). Raises CallFailed with status 0 when there is no answer."""
+    def request(self, method: str, path: str, body: dict[str, Any] | None = None,
+                correlation_id: str | None = None) -> tuple[int, Any]:
+        """(status, parsed JSON or None). Raises CallFailed with status 0 when there is no answer.
+
+        ``correlation_id`` replaces the run's id for this call: an event keeps the id of its request.
+        """
         data = None if body is None else json.dumps(body).encode("utf-8")
         request = urllib.request.Request(self.base_url + path, data=data, method=method)
         request.add_header("Accept", "application/json")
         request.add_header("Authorization", f"Bearer {self._token}")
         if data is not None:
             request.add_header("Content-Type", "application/json")
-        correlation_id = CORRELATION_ID.get()
+        correlation_id = correlation_id or CORRELATION_ID.get()
         if correlation_id:
             request.add_header("X-Correlation-Id", correlation_id)
         try:
