@@ -8,7 +8,8 @@ services:
       HEALTH_PORT: "8080"
       # The worker's own token (sub: barber-saas-worker), never a user's (ADR-016).
       SERVICE_TOKEN: ${WORKER_SERVICE_TOKEN:?run barber-saas-infra-postgres/scripts/dev-keys.sh}
-      # Producers whose outbox it relays (DEC-APPT-07, DEC-AUTH-08, DEC-LOY-04).
+      # Producers whose outbox it relays (DEC-APPT-07, DEC-AUTH-08, DEC-LOY-04); platform-admin joins
+      # once its outbox is served (DEC-PLAT-07).
       PRODUCERS: ${WORKER_PRODUCERS:-appointment,identity-auth,loyalty}
       # Consumers that take POST /internal/v1/events (loyalty since L-3, DEC-LOY-05). One left out
       # keeps its events waiting in the producer's outbox instead of failing them.
@@ -21,6 +22,8 @@ services:
       # Daily jobs, Colombia time (UTC-5, no daylight saving).
       UTC_OFFSET_HOURS: "-5"
       REMINDERS_AT: "18:00"
+      # Every N seconds, the one-hour reminder (DEC-APPT-12); empty = off until appointment-api takes `window`.
+      HOUR_REMINDERS_EVERY_SECONDS: ${WORKER_HOUR_REMINDERS_EVERY_SECONDS:-}
       NO_SHOWS_AT: "01:00"
       TRIALS_AT: "02:00"
     healthcheck:
