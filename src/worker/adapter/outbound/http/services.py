@@ -64,7 +64,8 @@ class HttpDailyCall:
         self._path = path
 
     def call(self, limit: int) -> tuple[int, bool]:
-        status, body = self._client.request("POST", f"{self._path}?limit={limit}")
+        separator = "&" if "?" in self._path else "?"
+        status, body = self._client.request("POST", f"{self._path}{separator}limit={limit}")
         data = expect(status, body, 200) or {}
         processed = data.get("processed", data.get("suspended", 0))
         return int(processed), bool(data.get("remaining", False))
