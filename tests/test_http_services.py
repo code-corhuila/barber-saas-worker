@@ -143,6 +143,12 @@ def test_the_one_hour_reminder_runs_only_when_enabled():
     assert "every-hour-reminders-due" in [j.name for j in build_jobs(env)]
 
 
+def test_platform_admin_runs_the_subscription_jobs_every_day():
+    env = {"SERVICE_TOKEN": "t", "PLATFORM_ADMIN_API_URL": "http://platform-admin-api:8080"}
+    names = [j.name for j in build_jobs(env)]
+    assert names == ["daily-trials-expire", "daily-subscriptions-expire", "daily-subscription-notices"]
+
+
 def test_platform_admin_can_be_a_producer():
     env = {"SERVICE_TOKEN": "t", "PRODUCERS": "platform-admin", "PLATFORM_ADMIN_API_URL": "http://platform-admin-api:8080"}
     assert build_jobs(env)[0].name == "relay-platform-admin"
