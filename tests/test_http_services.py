@@ -136,6 +136,25 @@ def test_the_environment_enables_only_configured_services():
         build_jobs({})
 
 
+def test_the_one_hour_reminder_runs_only_when_enabled():
+    env = {"SERVICE_TOKEN": "t", "APPOINTMENT_API_URL": "http://appointment-api:8080"}
+    assert "every-hour-reminders-due" not in [j.name for j in build_jobs(env)]
+    env["HOUR_REMINDERS_EVERY_SECONDS"] = "300"
+    assert "every-hour-reminders-due" in [j.name for j in build_jobs(env)]
+
+
+def test_platform_admin_can_be_a_producer():
+    env = {"SERVICE_TOKEN": "t", "PRODUCERS": "platform-admin", "PLATFORM_ADMIN_API_URL": "http://platform-admin-api:8080"}
+    assert build_jobs(env)[0].name == "relay-platform-admin"
+
+
+def test_a_daily_call_with_a_window_keeps_its_query(server):
+    ANSWERS[("POST", "/internal/v1/appointments/reminders-due")] = (200, {"processed": 1, "remaining": False})
+    call = HttpDailyCall("hour-reminders-due", server, "/internal/v1/appointments/reminders-due?window=HOUR_BEFORE")
+    assert call.call(50) == (1, False)
+    assert SEEN[0][1] == "/internal/v1/appointments/reminders-due?window=HOUR_BEFORE&limit=50"
+
+
 def test_a_service_can_produce_before_it_consumes():
     env = {"SERVICE_TOKEN": "t", "PRODUCERS": "loyalty", "CONSUMERS": "notifications",
            "LOYALTY_API_URL": "http://loyalty-api:8080", "NOTIFICATIONS_API_URL": "http://notifications-api:8080"}
