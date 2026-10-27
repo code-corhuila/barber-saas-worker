@@ -21,7 +21,7 @@ from worker.application.port.inbound.job import Job
 from worker.application.usecase.daily_job import DailyJob
 from worker.application.usecase.interval_job import IntervalJob
 from worker.application.usecase.relay_outbox import RelayOutbox
-from worker.domain.model.routing import LOYALTY, NOTIFICATIONS
+from worker.domain.model.routing import FINANCE, LOYALTY, NOTIFICATIONS
 
 
 class MonotonicClock:
@@ -57,9 +57,10 @@ def build_jobs(env: dict[str, str]) -> list[Job]:
 
     # A service can produce before it consumes (loyalty publishes stickers before it receives
     # AppointmentCompleted): CONSUMERS names the ones that already take POST /internal/v1/events.
-    consumer_urls = {LOYALTY: "LOYALTY_API_URL", NOTIFICATIONS: "NOTIFICATIONS_API_URL"}
+    consumer_urls = {LOYALTY: "LOYALTY_API_URL", NOTIFICATIONS: "NOTIFICATIONS_API_URL",
+                     FINANCE: "FINANCE_INVENTORY_API_URL"}
     consumers = {}
-    for name in _names(env.get("CONSUMERS", f"{LOYALTY},{NOTIFICATIONS}")):
+    for name in _names(env.get("CONSUMERS", f"{LOYALTY},{NOTIFICATIONS},{FINANCE}")):
         c = client(consumer_urls[name])
         if c:
             consumers[name] = HttpConsumer(name, c)

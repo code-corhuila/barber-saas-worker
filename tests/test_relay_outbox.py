@@ -60,8 +60,9 @@ def relay(producer: FakeProducer, clock: FakeClock, **consumers: FakeConsumer) -
 def test_an_event_goes_to_every_consumer_and_is_confirmed_once():
     clock, producer = FakeClock(), FakeProducer(event(1))
     loyalty, notifications = FakeConsumer("loyalty"), FakeConsumer("notifications")
-    report = relay(producer, clock, loyalty=loyalty, notifications=notifications).run(clock.t + 30)
-    assert loyalty.received == ["e1"] and notifications.received == ["e1"]
+    finance = FakeConsumer("finance")
+    report = relay(producer, clock, loyalty=loyalty, notifications=notifications, finance=finance).run(clock.t + 30)
+    assert loyalty.received == ["e1"] and notifications.received == ["e1"] and finance.received == ["e1"]
     assert producer.published_ids == ["e1"] and report.done == 1
 
 
@@ -93,7 +94,7 @@ def test_a_5xx_is_retried_after_the_backoff_and_fails_after_the_last_attempt():
 def test_a_retried_event_is_confirmed_once_the_consumer_recovers():
     clock, producer = FakeClock(), FakeProducer(event(1))
     loyalty, notifications = FakeConsumer("loyalty"), FakeConsumer("notifications", [500])
-    job = relay(producer, clock, loyalty=loyalty, notifications=notifications)
+    job = relay(producer, clock, loyalty=loyalty, notifications=notifications, finance=FakeConsumer("finance"))
     job.run(clock.t + 30)
     clock.t += 1000
     job.run(clock.t + 30)

@@ -33,7 +33,7 @@ work. It exposes no business HTTP interface: only `GET /health` (norm 5.7.1).
 
 - **Outbox relay (ADR-016):** every 5 s, for each producer (`PRODUCERS`), it reads up to 50 pending
   events (`GET /internal/v1/outbox-events`), delivers each to the consumers of its type
-  (`POST /internal/v1/events` of loyalty-api and notifications-api; routing in
+  (`POST /internal/v1/events` of loyalty-api, notifications-api and finance-inventory-api; routing in
   `domain/model/routing.py`, the table of `02-domain/domain-events.md`) and confirms it
   (`.../published`, or `.../failed` with the reason). `CONSUMERS` lists the consumers already able
   to receive: an event whose consumer is left out waits in its outbox, so a service can publish
