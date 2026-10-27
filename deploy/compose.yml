@@ -21,8 +21,8 @@ services:
       # Daily jobs, Colombia time (UTC-5, no daylight saving).
       UTC_OFFSET_HOURS: "-5"
       REMINDERS_AT: "18:00"
-      # Every N seconds, the one-hour reminder (DEC-APPT-12); empty = off until appointment-api takes `window`.
-      HOUR_REMINDERS_EVERY_SECONDS: ${WORKER_HOUR_REMINDERS_EVERY_SECONDS:-}
+      # Every N seconds, the one-hour reminder (DEC-APPT-12); appointment-api takes `window` since its #27.
+      HOUR_REMINDERS_EVERY_SECONDS: ${WORKER_HOUR_REMINDERS_EVERY_SECONDS:-300}
       NO_SHOWS_AT: "01:00"
       TRIALS_AT: "02:00"
       SUBSCRIPTIONS_AT: "02:05"
