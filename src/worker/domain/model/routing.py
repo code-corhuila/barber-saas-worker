@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+FINANCE = "finance"
 LOYALTY = "loyalty"
 NOTIFICATIONS = "notifications"
 
@@ -14,7 +15,8 @@ ROUTES: dict[str, tuple[str, ...]] = {
     "AppointmentCancelled": (NOTIFICATIONS,),
     "AppointmentReminderDue": (NOTIFICATIONS,),
     "AppointmentMarkedNoShow": (),
-    "AppointmentCompleted": (LOYALTY, NOTIFICATIONS),
+    # The automatic sticker (DEC-LOY-05), the notice, and the income of the appointment (DEC-FIN-03).
+    "AppointmentCompleted": (LOYALTY, NOTIFICATIONS, FINANCE),
     "StickerGranted": (NOTIFICATIONS,),
     "RewardRedeemed": (NOTIFICATIONS,),
     "PasswordResetRequested": (NOTIFICATIONS,),
