@@ -4,6 +4,29 @@ All notable changes to `barber-saas-worker` are recorded here. The format follow
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-11-05
+
+MVP 3 (corte 3): promoted from `develop` through `qa` with `git cherry-pick -x` (norm 10–11).
+
+User stories: code-corhuila/barber-saas-docs#128, code-corhuila/barber-saas-docs#131.
+
+### Added
+
+- **routing:** deliver the MVP 3 events to notifications
+- **jobs:** add a job that calls a service every few minutes
+- **app:** wire the one-hour reminder and platform-admin as a producer
+- **app:** run the subscription jobs and relay platform-admin's outbox
+- **routing:** deliver AppointmentCompleted to finance-inventory-api
+
+### Fixed
+
+- **relay:** deliver each event with the correlation id of its request
+- **daily-call:** keep the query of a call path when adding the limit
+
+### Maintenance
+
+- **deploy:** turn on the one-hour reminder every 300 seconds
+
 ## [2.0.0] - 2026-10-08
 
 MVP 2 (corte 2): first release of this repository to `main`, promoted from `develop` through `qa`
@@ -37,4 +60,5 @@ User stories: code-corhuila/barber-saas-docs#4, code-corhuila/barber-saas-docs#5
 
 - set up the Python package, the layer contracts and CI
 
+[3.0.0]: https://github.com/code-corhuila/barber-saas-worker/releases/tag/v3.0.0
 [2.0.0]: https://github.com/code-corhuila/barber-saas-worker/releases/tag/v2.0.0
