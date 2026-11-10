@@ -133,7 +133,20 @@ def test_the_environment_enables_only_configured_services():
     jobs = build_jobs({"SERVICE_TOKEN": "t", "APPOINTMENT_API_URL": "http://appointment-api:8080"})
     assert [j.name for j in jobs] == ["relay-appointment", "daily-reminders-due", "daily-no-shows"]
     with pytest.raises(SystemExit):
-        build_jobs({})
+        build_jobs({"APPOINTMENT_API_URL": "http://appointment-api:8080"})
+    assert build_jobs({}) == []
+
+
+def test_each_service_is_called_with_its_own_token():
+    env = {"SERVICE_TOKEN": "shared", "APPOINTMENT_TOKEN": "for-appointment", "PRODUCERS": "appointment,loyalty",
+           "CONSUMERS": "loyalty", "APPOINTMENT_API_URL": "http://appointment-api:8080",
+           "LOYALTY_API_URL": "http://loyalty-api:8080", "LOYALTY_TOKEN": "for-loyalty",
+           "PLATFORM_ADMIN_API_URL": "http://platform-admin-api:8080"}
+    jobs = {j.name: j for j in build_jobs(env)}
+    assert jobs["relay-appointment"]._producer._client._token == "for-appointment"
+    assert jobs["relay-loyalty"]._producer._client._token == "for-loyalty"
+    assert jobs["relay-appointment"]._consumers["loyalty"]._client._token == "for-loyalty"
+    assert jobs["daily-subscriptions-expire"]._call._client._token == "shared"   # no PLATFORM_ADMIN_TOKEN yet
 
 
 def test_the_one_hour_reminder_runs_only_when_enabled():

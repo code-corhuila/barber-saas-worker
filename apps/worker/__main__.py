@@ -41,13 +41,23 @@ def _names(value: str) -> list[str]:
 
 def build_jobs(env: dict[str, str]) -> list[Job]:
     """Every job the environment enables. A service without a URL is simply not called."""
-    token = env.get("SERVICE_TOKEN", "")
-    if not token:
-        raise SystemExit("SERVICE_TOKEN is required: WORKER_SERVICE_TOKEN of barber-saas-infra-postgres")
+    shared = env.get("SERVICE_TOKEN", "").strip()
 
     def client(var: str) -> HttpClient | None:
+        """The service at URL `var`, called with its own token (`LOYALTY_API_URL` -> `LOYALTY_TOKEN`).
+
+        Each token names that service as `aud` and carries only the scopes the worker needs there
+        (docs#158, docs#159), so a token leaked from one call cannot be replayed on another service.
+        SERVICE_TOKEN is the fallback while an environment still has a single token.
+        """
         url = env.get(var, "").strip()
-        return HttpClient(url, token) if url else None
+        if not url:
+            return None
+        token = env.get(var.replace("_API_URL", "_TOKEN"), "").strip() or shared
+        if not token:
+            raise SystemExit(f"{var.replace('_API_URL', '_TOKEN')} (or SERVICE_TOKEN) is required: "
+                             "run barber-saas-infra-postgres/scripts/dev-keys.sh")
+        return HttpClient(url, token)
 
     clock = MonotonicClock()
     offset = timezone(timedelta(hours=float(env.get("UTC_OFFSET_HOURS", "-5"))))  # Colombia: no DST
