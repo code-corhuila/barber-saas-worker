@@ -8,7 +8,7 @@ All notable changes to `barber-saas-worker` are recorded here. The format follow
 
 MVP 3 (corte 3): promoted from `develop` through `qa` with `git cherry-pick -x` (norm 10–11).
 
-User stories: code-corhuila/barber-saas-docs#128, code-corhuila/barber-saas-docs#131.
+User stories: code-corhuila/barber-saas-docs#128, code-corhuila/barber-saas-docs#131, code-corhuila/barber-saas-docs#158, code-corhuila/barber-saas-docs#159.
 
 ### Added
 
@@ -17,6 +17,8 @@ User stories: code-corhuila/barber-saas-docs#128, code-corhuila/barber-saas-docs
 - **app:** wire the one-hour reminder and platform-admin as a producer
 - **app:** run the subscription jobs and relay platform-admin's outbox
 - **routing:** deliver AppointmentCompleted to finance-inventory-api
+- **worker:** call each service with its own token
+- **deploy:** pass one token per called service
 
 ### Fixed
 
