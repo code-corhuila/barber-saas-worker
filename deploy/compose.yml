@@ -6,8 +6,16 @@ services:
       dockerfile: deploy/Dockerfile
     environment:
       HEALTH_PORT: "8080"
-      # The worker's own token (sub: barber-saas-worker), never a user's (ADR-016).
+      # The worker's own tokens (sub: barber-saas-worker), never a user's (ADR-016): one per service it
+      # calls, with that service as `aud` and only the scopes it needs there (docs#158, docs#159).
+      # SERVICE_TOKEN is the fallback for a service without its own token.
       SERVICE_TOKEN: ${WORKER_SERVICE_TOKEN:?run barber-saas-infra-postgres/scripts/dev-keys.sh}
+      APPOINTMENT_TOKEN: ${WORKER_APPOINTMENT_TOKEN:-}
+      LOYALTY_TOKEN: ${WORKER_LOYALTY_TOKEN:-}
+      IDENTITY_AUTH_TOKEN: ${WORKER_IDENTITY_AUTH_TOKEN:-}
+      PLATFORM_ADMIN_TOKEN: ${WORKER_PLATFORM_ADMIN_TOKEN:-}
+      NOTIFICATIONS_TOKEN: ${WORKER_NOTIFICATIONS_TOKEN:-}
+      FINANCE_INVENTORY_TOKEN: ${WORKER_FINANCE_INVENTORY_TOKEN:-}
       # Producers whose outbox it relays (DEC-APPT-07, DEC-AUTH-08, DEC-LOY-04, DEC-PLAT-07).
       PRODUCERS: ${WORKER_PRODUCERS:-appointment,identity-auth,loyalty,platform-admin}
       # Consumers that take POST /internal/v1/events (loyalty since L-3, DEC-LOY-05; finance since
